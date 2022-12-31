@@ -1,0 +1,30 @@
+#include <WiFi.h>        //引用Wi-Fi函式庫
+#include <HTTPClient.h>  //引用函式庫
+HTTPClient http;         //建立物件
+
+const char *ssid = "E608";         //無線網路基地台的SSID
+const char *password = "E608E608";     //無線網路基地台的密碼
+String data1;
+void setup() {
+  Serial.begin(9600, SERIAL_8N1, 16,17);
+  WiFi.begin(ssid, password);              //連到無線基地台
+  while (WiFi.status() != WL_CONNECTED) {  //當狀態不是已連線
+    delay(500);                            //等待0.5秒
+    Serial.print(".");                     //印出一個點提示讓你知道
+  }                                        //回到迴圈判斷處，再判斷一次
+  Serial.print("已連上Wi-Fi");
+}
+
+void loop() {
+  String Data="https://api.thingspeak.com/update?api_key=XF65PD2ATS1TC3LK&field1=";
+//資料傳輸目標網址
+  if (Serial.available())//假如序列監控區有東西
+{
+    data1 = Serial.readString();//讀取序列監控區的資料(總金額)
+    int index = data1.lastIndexOf(".");//返回指定字符中最後出現的符號(去除浮點數小數點)
+    Data = Data + data1.substring(0, index);//回傳總金額(指定範圍為字符開始~.結束)
+    Serial.print(data1);//回傳資料供確認
+    http.begin(Data);
+    int httpCode = http.GET();//得到網站資料
+  }
+}
