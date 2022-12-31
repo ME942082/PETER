@@ -1,0 +1,132 @@
+#include <LiquidCrystal.h>//引入函式庫
+LiquidCrystal lcd(8,9,10,11,12,13);
+#define KEY1 2 //切換92開始按鈕
+#define KEY2 3 //切換95開始按鈕
+#define KEY3 4 //切換98開始按鈕
+#define KEY4 5 //重置
+float price[]={28.8,30.3,32.3}; //初始油錢價錢     
+float priced[]={0,0,0};//各油種總金額
+float petrol=0; //三種油量;
+int save[]={92,95,98};
+float ptotal=0;  //加油總價錢
+int i=0,j=0,k=0;
+int number=0; //存按下按鍵
+char mode=1;//用以分辨各種不同模式
+const byte led[]={A0,A1,A2};//LED腳位
+const byte led_RGB[6][3]={{0,0,0},{255,255,255},{0,255,0},{255,127,0},{255,0,0},{153,50,205}}
+//改變LED顏色
+
+
+void setup() //宣告各腳位輸入輸出模式 
+{
+ Serial.begin(9600);
+ pinMode(KEY1,INPUT_PULLUP); 
+ pinMode(KEY2,INPUT_PULLUP);
+ pinMode(KEY3,INPUT_PULLUP);
+ pinMode(KEY4,INPUT_PULLUP);
+ for(j=0;j<2;j++){
+  pinMode(led[j],OUTPUT);
+  }
+ lcd.begin(16,2);
+  
+
+}
+
+void loop()
+ {
+  if(digitalRead(KEY1)==0 && mode!=2)//按鈕1開始跳表
+{
+    mode=2;
+    petrol=0;
+    number=0;//顯示92油種
+    analogWrite(led[0],led_RGB[4][0]);//亮燈
+      
+ }
+  if(digitalRead(KEY2)==0 && mode!=2) //按鈕2開始跳表
+{
+    mode=2;
+    petrol=0;
+    number=1; //顯示95油種
+    analogWrite(led[1],led_RGB[1]); //亮燈
+      
+ }
+  if(digitalRead(KEY3)==0 && mode!=2) //按鈕3開始跳表
+{
+    mode=2;
+    petrol=0;
+    number=2; //顯示98油種
+    analogWrite(led[2],led_RGB[2]); //亮燈
+      
+ }
+ 
+    if(mode==2){
+      petrol=petrol+1;//油量開始上升
+      lcd.setCursor(0,0);
+      lcd.print("petrol ");//於畫面印出油種
+      lcd.print(save[number]);//用number不同油種
+      lcd.print(" ");
+      lcd.print(petrol);//油量
+      lcd.print("L"); //公升
+      lcd.setCursor(0,1);
+      lcd.print("P ");  //金額
+      priced[number]= priced[number]+price[number]*1;  //個別油種總金額
+      lcd.print(priced[number]);   //印出個別油種總金額
+      lcd.print("$ ");
+      ptotal=priced[0]+priced[1]+priced[2];//三種油種總金額計算
+      lcd.print("T ");
+      lcd.print(int(ptotal/1000));//三種油種總金額顯示(以k為單位)
+      lcd.print("k$");
+      delay(500);//跳表間隔時間
+      
+      }
+      if(mode==2&&digitalRead(KEY1)==0&&number==0)//重復按下各按鈕暫停
+
+{
+        mode=0;
+        delay(700);
+        change();
+        }
+      if(mode==2&&digitalRead(KEY2)==0&&number==1){  //重復按下各按鈕暫停
+        mode=0;
+        delay(700);
+        change();
+        }
+      if(mode==2&&digitalRead(KEY3)==0&&number==2){ //重復按下各按鈕暫停
+        mode=0;
+        delay(700);
+        change();
+        }
+
+       if(mode==0&&digitalRead(KEY1)==0&&number==0) //再按一下重新開始計算
+{
+        mode=2;
+        }
+        if(mode==0&&digitalRead(KEY2)==0&&number==1){          
+        mode=2;
+        }
+        if(mode==0&&digitalRead(KEY3)==0&&number==2){
+        mode=2;
+        } 
+      
+   if(digitalRead(KEY4)==0&&mode!=6)//重製按鈕
+{
+   reset();
+   mode=6;
+   }
+} 
+
+
+void reset(){  //重製按鈕功能
+  Serial.print(ptotal);//於序列監控區印出總共價格，方便ESP端操作
+  lcd.clear();//清除
+  for(i=0;i<3;i++)//所有金額重製
+{
+    priced[i]=0;
+    ptotal=0;
+    }
+  }
+  void change()//LED燈變換顏色
+{
+  analogWrite(led[0],led_RGB[0][0]);
+  analogWrite(led[1],led_RGB[0][1]);
+  analogWrite(led[2],led_RGB[0][2]);
